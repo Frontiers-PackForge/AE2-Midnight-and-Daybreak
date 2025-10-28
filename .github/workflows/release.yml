@@ -16,13 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Get branch name
-        id: branch
-        run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
-        
       - name: Create zip file
         run: |
-          zip -r ${{ steps.branch.outputs.branch }}.zip . \
+          zip -r ${{ github.ref_name }}.zip . \
             -x "*.git*" \
             -x "*node_modules/*" \
             -x "*.github/*"
@@ -30,12 +26,12 @@ jobs:
       - name: Update latest release
         uses: andelf/nightly-release@main
         with:
-          tag_name: ${{ steps.branch.outputs.branch }}-latest
-          name: Latest Release - Branch ${{ steps.branch.outputs.branch }}
-          files: ${{ steps.branch.outputs.branch }}.zip
+          tag_name: ${{ github.ref_name }}-latest
+          name: Latest Release - Branch ${{ github.ref_name }}
+          files: ${{ github.ref_name }}.zip
           body: |
-            Latest release for branch `${{ steps.branch.outputs.branch }}`
+            Latest release for branch `${{ github.ref_name }}`
             
-            This release is automatically updated on every commit to branch ${{ steps.branch.outputs.branch }}.
+            This release is automatically updated on every commit to branch ${{ github.ref_name }}.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
