@@ -20,47 +20,22 @@ jobs:
         id: branch
         run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
         
-      - name: Get short SHA
-        id: sha
-        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-        
       - name: Create zip file
         run: |
-          zip -r ${{ steps.branch.outputs.branch }}-${{ steps.sha.outputs.sha }}.zip . \
+          zip -r ${{ steps.branch.outputs.branch }}.zip . \
             -x "*.git*" \
             -x "*node_modules/*" \
             -x "*.github/*"
       
-      - name: Delete old latest release for this branch
-        continue-on-error: true
-        run: |
-          gh release delete ${{ steps.branch.outputs.branch }}-latest --yes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Create/Update Latest Release
-        uses: softprops/action-gh-release@v1
+      - name: Update latest release
+        uses: andelf/nightly-release@main
         with:
           tag_name: ${{ steps.branch.outputs.branch }}-latest
           name: Latest Release - Branch ${{ steps.branch.outputs.branch }}
-          files: ${{ steps.branch.outputs.branch }}-${{ steps.sha.outputs.sha }}.zip
+          files: ${{ steps.branch.outputs.branch }}.zip
           body: |
             Latest release for branch `${{ steps.branch.outputs.branch }}`
-            Commit: ${{ github.sha }}
-            Short SHA: ${{ steps.sha.outputs.sha }}
             
             This release is automatically updated on every commit to branch ${{ steps.branch.outputs.branch }}.
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Create Timestamped Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.branch.outputs.branch }}-${{ steps.sha.outputs.sha }}
-          name: Release ${{ steps.branch.outputs.branch }} - ${{ steps.sha.outputs.sha }}
-          files: ${{ steps.branch.outputs.branch }}-${{ steps.sha.outputs.sha }}.zip
-          body: |
-            Release for branch `${{ steps.branch.outputs.branch }}`
-            Commit: ${{ github.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
